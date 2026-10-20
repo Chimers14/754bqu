@@ -1,0 +1,2 @@
+Keep your existing source subfolders (PNG pages) and manifest.json in this sources folder.
+Run python build_sources.py from the project root to rebuild the manifest.
