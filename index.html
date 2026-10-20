@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <title>Archive / Mixup</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400&display=swap">
+
+    <!-- Game fonts: 10 selectable fonts + per-script fallbacks (only used inside the game) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=IBM+Plex+Mono&family=JetBrains+Mono&family=Orbitron&family=Press+Start+2P&family=Roboto+Mono&family=Share+Tech+Mono&family=Space+Mono&family=VT323&family=Noto+Sans+JP&family=Noto+Sans+SC&family=Noto+Sans+KR&family=Noto+Sans+Devanagari&family=Noto+Sans+Arabic&display=swap">
+
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <script src="game.js" defer></script>
+    <script src="physics.js" defer></script>
+    <script src="words.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+    <script src="sources.js" defer></script>
+</head>
+
+<body>
+<div class="app" id="app">
+
+    <canvas id="boidCanvas" aria-hidden="true"></canvas>
+    <canvas id="settingsParticleCanvas" aria-hidden="true"></canvas>
+    <div class="center-fade" aria-hidden="true"></div>
+
+    <div class="corner rainbow-text">ARCHIVE // 001</div>
+    <div class="status rainbow-text" id="status">* ONLINE *</div>
+
+    <main class="stage" id="stage">
+        <span class="orbit-mark mark-one"></span>
+        <span class="orbit-mark mark-two"></span>
+        <span class="orbit-mark mark-three"></span>
+        <span class="orbit-mark mark-four"></span>
+
+        <h1 class="title rainbow-text" id="title">*$#</h1>
+        <div class="scramble-line rainbow-text" id="scrambleLine">*$#</div>
+        <div class="center-hover-zone" id="centerHoverZone"></div>
+
+        <button class="orbit-button button-one" data-label="MUSIC" id="musicButton" type="button" aria-haspopup="dialog" aria-controls="musicOverlay">
+            <span class="scrambled"></span>
+            <span class="real-label music-note-orbit" aria-hidden="true"><span>♪</span><span>♫</span><span>♬</span></span>
+        </button>
+
+        <button class="orbit-button button-two" data-label="SOURCES" id="sourcesButton" type="button" aria-label="Reading sources">
+            <span class="scrambled"></span>
+            <span class="real-label">READ</span>
+        </button>
+
+        <button class="orbit-button button-three settings-button" data-label="SETTINGS" id="settingsButton" type="button" aria-haspopup="dialog" aria-controls="settingsPanel">
+            <span class="scrambled"></span>
+            <span class="real-label">⚙</span>
+        </button>
+
+       <button class="orbit-button button-four" data-label="SOCIAL" id="socialButton" type="button">
+    <span class="scrambled"></span>
+    <span class="real-label">↗ SOCIAL</span>
+</button>
+
+        <button class="orbit-button button-five" data-label="ABOUT" type="button">
+            <span class="scrambled"></span>
+            <span class="real-label">?</span>
+        </button>
+
+        <button class="orbit-button button-six" data-label="VIDEO" id="videoButton" type="button">
+            <span class="scrambled"></span>
+            <span class="real-label">▶ VIDEO</span>
+        </button>
+
+        <button class="orbit-button button-seven" data-label="MIXUP" id="mixupButton" type="button">
+            <span class="scrambled"></span>
+            <span class="real-label">MIXUP</span>
+        </button>
+
+        <button class="orbit-button button-eight" data-label="WORDS" id="wordButton" type="button" aria-haspopup="dialog" aria-controls="wordOverlay">
+            <span class="scrambled"></span>
+            <span class="real-label">WORDS</span>
+        </button>
+    </main>
+
+    <div class="bottom-scramble rainbow-text" id="bottomScramble">
+        01001101 * $ # 01001001
+    </div>
+
+    <!-- Music: the ribbon itself is drawn on the particle canvas.
+         This layer only holds the controls underneath it. -->
+    <div class="music-overlay" id="musicOverlay" aria-hidden="true">
+        <button class="close-music rainbow-text" id="closeMusic" type="button" aria-label="Close music">×</button>
+
+        <section class="music-panel" id="musicPanel" role="dialog" aria-modal="true" aria-labelledby="musicNow" tabindex="-1">
+
+            <p class="music-eyebrow rainbow-text">DIDACTIC-SWARM // AUDIO</p>
+            <h2 class="music-now rainbow-text" id="musicNow">NO SIGNAL</h2>
+
+            <div class="music-controls">
+                <button class="music-btn rainbow-text" id="prevTrack" type="button" aria-label="Previous track">◀◀</button>
+                <button class="music-btn music-play rainbow-text" id="playToggle" type="button" aria-label="Play">▶</button>
+                <button class="music-btn rainbow-text" id="nextTrack" type="button" aria-label="Next track">▶▶</button>
+            </div>
+
+            <div class="music-seek">
+                <span id="timeCurrent">0:00</span>
+                <input id="seekBar" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+                <span id="timeTotal">0:00</span>
+            </div>
+
+            <div class="music-seek music-volume">
+                <span>VOL</span>
+                <input id="volumeBar" type="range" min="0" max="100" value="80" step="1" aria-label="Volume">
+                <span id="volumeValue">80</span>
+            </div>
+
+            <ul class="playlist" id="playlist"></ul>
+
+            <div class="music-footer">
+                <span id="musicStatus" aria-live="polite">READY</span>
+                <button class="add-file" id="addFileButton" type="button">+ ADD FILE</button>
+                <input id="addFileInput" type="file" accept="audio/*" multiple hidden>
+            </div>
+        </section>
+    </div>
+
+
+    <!-- Words: type a word, it falls, drag it to read its etymology -->
+    <div class="word-overlay" id="wordOverlay" aria-hidden="true">
+        <button class="close-word rainbow-text" id="closeWord" type="button" aria-label="Close words">×</button>
+        <button class="word-clear rainbow-text" id="wordClear" type="button">CLEAR</button>
+
+        <!-- falling words live in here -->
+        <div class="word-field" id="wordField"></div>
+
+        <section class="word-panel" id="wordPanel" role="dialog" aria-modal="true" aria-labelledby="wordTitle">
+            <p class="word-eyebrow rainbow-text" id="wordTitle">DIDACTIC-SWARM // LEXICON</p>
+
+            <div class="word-search" id="wordSearch">
+                <input id="wordInput" type="text" maxlength="28" placeholder="type a word" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Type a word and press enter">
+            </div>
+
+            <div class="word-instructions"><strong>HOW TO PLAY</strong><p>Type a single word and press ENTER to drop it into the room. Add more words to build a bouncing pile. Grab a word with your mouse or finger, drag it around, and release while moving to throw it. Words tumble, rotate and collide. Hold a word to explore its definition and history. CLEAR removes the pile.</p><label for="wordLanguage">DICTIONARY LANGUAGE</label><select id="wordLanguage"><option value="en">English</option><option value="ht">Kreyòl ayisyen</option><option value="jam">Jamaican Patwa</option><option value="fr">Français</option><option value="es">Español</option><option value="pt">Português</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="sw">Kiswahili</option></select></div>
+
+            <div class="word-ety" id="wordEty" aria-live="polite">
+                <div class="word-ety-head">
+                    <span class="word-ety-word rainbow-text" id="wordEtyWord"></span>
+                    <span class="word-ety-meta" id="wordEtyMeta"></span>
+                </div>
+                <p class="word-ety-meaning" id="wordEtyMeaning"></p>
+                <p class="word-ety-label" id="wordEtyLabel"></p>
+                <p class="word-ety-body" id="wordEtyBody"></p>
+                <p class="word-ety-source" id="wordEtySource"></p>
+            </div>
+        </section>
+    </div>
+
+    <div class="game-overlay" id="gameOverlay" aria-hidden="true">
+        <section class="game-lobby" id="gameLobby" aria-label="Customize your swarm">
+            <button class="game-back lobby-back" id="lobbyBack" type="button">← BACK TO SITE</button>
+            <p class="game-kicker rainbow-text">MIXUP // WORK IN PROGRESS</p>
+            <h2 class="game-lobby-title rainbow-text" id="lobbyQuote">"A pattern is a thought that learned to move."</h2>
+            <canvas id="playerPreview" width="360" height="240" aria-label="Animated preview of your letter swarm"></canvas>
+            <div class="game-custom-fields">
+                <label class="game-field game-field-wide">NAME
+                    <input id="lobbyName" maxlength="16" value="player" autocomplete="nickname" spellcheck="false">
+                </label>
+                <label class="game-field">LANGUAGE
+                    <select id="playerLanguage"></select>
+                </label>
+                <label class="game-field">FONT
+                    <select id="playerFont"></select>
+                </label>
+            </div>
+            <button class="game-start rainbow-text" id="startGameButton" type="button">PLAY MIXUP (WIP) ↗</button>
+            
+        </section>
+        <div class="game-topbar">
+            <button class="game-back" id="gameBack" type="button">← EXIT</button>
+            <span class="game-status" id="gameStatus">MIXUP // WORK IN PROGRESS</span>
+            <label class="game-name-label">NAME <input id="gameName" maxlength="16" value="player" autocomplete="nickname"></label>
+        </div>
+        <canvas id="gameCanvas" aria-label="Letter swarm game arena"></canvas>
+        <div class="game-hud">
+            <span id="gameScore">LETTERS 0 · MASS 10</span>
+            <span id="gamePlayers">PLAYERS 1</span>
+            <span id="gameConnection">LOCAL MODE</span>
+        </div>
+        <div class="game-help">
+            <span class="help-desktop">Steer with your pointer or WASD. Eat glyphs to grow. SPACE splits (20+ mass per cell). Halves re-join after a few seconds. Bigger swarms eat smaller ones.</span>
+            <span class="help-touch">Hold a finger to steer. Eat glyphs to grow. Tap SPLIT (20+ mass) to shoot out half your swarm. Bigger swarms eat smaller ones.</span>
+        </div>
+        <button class="game-split-btn" id="gameSplit" type="button" aria-label="Split your swarm">SPLIT</button>
+        <div class="game-toast" id="gameToast" aria-live="polite"></div>
+    </div>
+
+
+    <div class="sources-overlay" id="sourcesOverlay" aria-hidden="true">
+      <header class="sources-header"><div><p class="sources-kicker rainbow-text">ARCHIVES // READING & RESEARCH</p><h2 class="rainbow-text">SOURCES</h2></div><button id="closeSources" aria-label="Close sources">×</button></header>
+      <div class="sources-layout">
+        <aside class="sources-sidebar"><label for="sourceSearch">SEARCH SOURCES / TEXT</label><input id="sourceSearch" placeholder="Search titles or extracted text" type="search"/><button id="flashTab" class="source-tab" type="button" aria-expanded="false">▸ ARTWORKS / SOURCES</button><div id="flashTabPanel" class="source-tab-panel" hidden><div id="sourceList" class="source-list"></div></div><label class="source-add" for="sourceUpload">+ ADD PDF / PNG / JPG / TEXT</label><input id="sourceUpload" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.avif,.svg,.tif,.tiff,.txt,application/pdf,image/*,text/plain" multiple hidden/><p class="source-note">Add files from your devices' storage.   Click "recognize image text" to isolate text in images, PDFSs, books, etc.     Double-click to select and drag a word.     The definitions and etemology can be seen on the bottom of the word box.</p></aside>
+        <main class="source-main"><div class="source-toolbar"><span id="sourceTitle">CHOOSE A SOURCE</span><div><button id="sourcePrev" aria-label="Previous page">←</button><span id="sourcePageCount">—</span><button id="sourceNext" aria-label="Next page">→</button></div></div>
+            
+            
+            <div class="source-zoom-controls" id="sourceZoomControls" hidden>
+  <button type="button" id="sourceZoomOut" aria-label="Zoom out">−</button>
+  <span id="sourceZoomLabel">FIT</span>
+  <button type="button" id="sourceZoomIn" aria-label="Zoom in">+</button>
+  <button type="button" id="sourceZoomFit">FIT</button>
+  <button type="button" id="sourceZoomActual">100%</button>
+</div>
+        <div id="sourceViewport" class="source-viewport"><p>Open a book or upload a document to start reading.</p></div><div id="sourcePaneSplitter" class="source-pane-splitter" role="separator" aria-label="Resize reading area and word playground" aria-orientation="horizontal" aria-valuemin="10" aria-valuemax="90" aria-valuenow="50" tabindex="0" title="Drag up or down to resize the reading area. Double-click to reset."><span class="source-splitter-grip" aria-hidden="true"><i></i><i></i><i></i></span></div><div class="source-instructions"><strong>READ / WORD PHYSICS</strong> — Open SOURCES / ARTWORKS to browse the example book. For scanned pages choose RECOGNIZE IMAGE TEXT, then double-click or double-tap a recognized word to drop it into the physics area. Single-click to define; drag a word away to drop it too. Grab loose words with a mouse or finger, rotate, swing and throw them. Words collide and stack; CLEAR LOOSE WORDS resets the playground.</div><div class="source-tools"><label for="sourceLanguage">DICTIONARY LANGUAGE</label><select id="sourceLanguage"><option value="en">English</option><option value="ht">Kreyòl ayisyen / Haitian Creole</option><option value="fr">Français</option><option value="es">Español</option><option value="pt">Português</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="sw">Kiswahili</option><option value="jam">Jamaican Patwa</option></select><button id="sourceOCR">RECOGNIZE IMAGE TEXT (OCR)</button><button id="sourceClearWords">CLEAR LOOSE WORDS</button><span id="sourceFeedback" role="status"></span></div><div id="sourcePhysics" class="source-physics" aria-label="Loose words physics playground"></div><div class="source-definition" id="sourceDefinition" aria-live="polite">Tap one word to define it. Drag a word off the page into the playground to make it bounce and tumble. Tap again to deselect.</div></main>
+      </div>
+    </div>
+    <div class="video-overlay" id="videoOverlay" aria-hidden="true"><div id="videoFrame"></div><div class="video-float-controls"><button id="videoBack" aria-label="Back to main menu" title="Back to main menu">← MENU</button><button id="videoShuffle" aria-label="Another random video">↻</button><button id="videoClose" aria-label="Close video">×</button></div></div>
+
+    <audio id="audio" preload="metadata"></audio>
+
+    <!-- Actual settings interface -->
+    <div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
+        <section class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" tabindex="-1">
+
+            <header class="settings-header">
+                <div>
+                    <p class="settings-eyebrow rainbow-text">DIDACTIC-SWARM // CONFIG</p>
+                    <h2 class="settings-title rainbow-text" id="settingsTitle">SETTINGS</h2>
+                </div>
+                <button class="close-settings" id="closeSettings" type="button" aria-label="Close settings">×</button>
+            </header>
+
+            <div class="settings-content">
+
+                <section class="settings-section">
+                    <h3>APPEARANCE</h3>
+                    <p class="setting-description">Select a theme.</p>
+
+                    <div class="mode-options" role="group" aria-label="Interface mode">
+                        <button class="mode-button active" id="darkModeButton" type="button" aria-pressed="true">
+                            <span class="mode-icon">◐</span>
+                            <span>DARK</span>
+                        </button>
+                        <button class="mode-button" id="lightModeButton" type="button" aria-pressed="false">
+                            <span class="mode-icon">○</span>
+                            <span>LIGHT</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <div class="setting-heading-row">
+                        <h3>RAINBOW ANIMATION</h3>
+                        <label class="switch">
+                            <input id="rainbowToggle" type="checkbox" checked>
+                            <span class="switch-track"></span>
+                            <span class="visually-hidden">Enable rainbow animation</span>
+                        </label>
+                    </div>
+                    <p class="setting-description">Animate the page gradient.</p>
+
+                    <label class="control-label" for="rainbowSpeed">Animation speed</label>
+                    <div class="range-row">
+                        <input id="rainbowSpeed" type="range" min="2" max="20" value="7" step="1">
+                        <output id="rainbowSpeedValue" for="rainbowSpeed">7s</output>
+                    </div>
+                    <p class="setting-hint">Lower values are faster.</p>
+                </section>
+
+                <section class="settings-section">
+                    <h3>RAINBOW COLORS</h3>
+                    <p class="setting-description">Customize the gradient colors.</p>
+
+                    <div class="color-grid">
+                        <label class="color-choice">
+                            <span>COLOR 01</span>
+                            <input type="color" class="rainbow-color" value="#a83232" aria-label="Rainbow color 1">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 02</span>
+                            <input type="color" class="rainbow-color" value="#c47a22" aria-label="Rainbow color 2">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 03</span>
+                            <input type="color" class="rainbow-color" value="#b8b52a" aria-label="Rainbow color 3">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 04</span>
+                            <input type="color" class="rainbow-color" value="#27a957" aria-label="Rainbow color 4">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 05</span>
+                            <input type="color" class="rainbow-color" value="#2187a8" aria-label="Rainbow color 5">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 06</span>
+                            <input type="color" class="rainbow-color" value="#5545a8" aria-label="Rainbow color 6">
+                        </label>
+                        <label class="color-choice">
+                            <span>COLOR 07</span>
+                            <input type="color" class="rainbow-color" value="#9a329d" aria-label="Rainbow color 7">
+                        </label>
+                    </div>
+
+                    <div class="rainbow-preview rainbow-text" id="rainbowPreview">
+                        *$# RAINBOW PREVIEW *$#
+                    </div>
+                </section>
+
+                <footer class="settings-footer">
+                    <span id="settingsStatus" aria-live="polite">CONFIGURATION READY</span>
+                    <button class="reset-button" id="resetSettings" type="button">RESET DEFAULTS</button>
+                </footer>
+            </div>
+        </section>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,14 @@
+MIXUP ARCHIVE - FIXED TEST BUNDLE
+
+1. Make a backup of your current project folder.
+2. Copy these updated project files into your project, replacing the matching files.
+3. KEEP your existing sources/ folder and all its PNGs. They are not included in this download.
+4. From the project folder in VS Code Terminal, run:
+      python build_sources.py
+      python -m http.server 8000
+5. Open http://localhost:8000 and hard refresh (Ctrl+Shift+R).
+6. Click a permanent book tab. Test FIT, +, -, 100%, page arrows and divider.
+
+FIX: The PNG rendering branch in sources.js was missing the code that appends images, because the splitter-limits function had accidentally been pasted into it. The rendering code is restored and splitter limits are fixed at the correct function.
+
+Note: game.js was not included in the uploads. Retain your existing game.js if present.
